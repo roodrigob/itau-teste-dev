@@ -14,9 +14,9 @@ import java.time.OffsetDateTime;
 @Builder
 public class TransacaoRequest {
 
-    @NotNull(message = "Valor é um campo obrigatório")
+    @NotNull
     private Double valor;
 
-    @NotNull(message = "Data e hora são obrigatórios")
+    @NotNull
     private OffsetDateTime dataHora;
 }
