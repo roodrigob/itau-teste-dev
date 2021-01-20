@@ -15,14 +15,20 @@ import java.net.URI;
 @RequestMapping("/transacao")
 public class TransacaoController {
 
+    public static final String VAZIO = "";
     @Autowired
     private TransacaoService service;
 
     @PostMapping
     public ResponseEntity<Void> criarTransacoes(@RequestBody @Valid TransacaoRequest request) {
-        URI uri = URI.create("");
         service.salvarTransacoes(request);
-        return ResponseEntity.created(uri).build();
+        return ResponseEntity.created(URI.create(VAZIO)).build();
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deletarTransacoes() {
+        service.deletarTransacoes();
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler({ RegraDeNegocioExeption.class })
