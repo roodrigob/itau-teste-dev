@@ -1,6 +1,7 @@
 package br.com.itau.controller;
 
 import br.com.itau.request.TransacaoRequest;
+import br.com.itau.response.EstatisticaResponse;
 import br.com.itau.service.TransacaoService;
 import br.com.itau.service.exeption.RegraDeNegocioExeption;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +11,14 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.DoubleSummaryStatistics;
 
 @RestController
 @RequestMapping("/transacao")
 public class TransacaoController {
 
     public static final String VAZIO = "";
+
     @Autowired
     private TransacaoService service;
 
@@ -31,6 +34,12 @@ public class TransacaoController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/estatistica")
+    public ResponseEntity<EstatisticaResponse> consultarEstatisticas() {
+        return ResponseEntity.ok(service.consultarEstatisticas());
+    }
+
+
     @ExceptionHandler({ RegraDeNegocioExeption.class })
     public ResponseEntity<Object> handleValorOuDataHoraExeption(){
         return ResponseEntity.unprocessableEntity().body("");
@@ -40,4 +49,6 @@ public class TransacaoController {
     public ResponseEntity<Object> handleJsonInvalido(){
         return ResponseEntity.badRequest().build();
     }
+
+
 }

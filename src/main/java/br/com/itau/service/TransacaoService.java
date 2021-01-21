@@ -1,15 +1,25 @@
 package br.com.itau.service;
 
 import br.com.itau.request.TransacaoRequest;
+import br.com.itau.response.EstatisticaResponse;
 import br.com.itau.service.exeption.RegraDeNegocioExeption;
 import br.com.itau.utils.BusinessError;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
+import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -50,6 +60,36 @@ public class TransacaoService {
     public void deletarTransacoes() {
 
         listaTransacoes.removeAll(listaTransacoes);
+    }
+
+    public EstatisticaResponse consultarEstatisticas() {
+
+        val listaFiltrada = filtrarListaComTrasacoesAteUmMinuto();
+
+        if (listaFiltrada.isEmpty()) {
+            return EstatisticaResponse.builder().build();
+        }
+
+        return criarEstatisticaResponse(listaFiltrada);
+
+    }
+
+    private List<TransacaoRequest> filtrarListaComTrasacoesAteUmMinuto() {
+        return listaTransacoes.stream()
+                .filter(data -> data.getDataHora().isAfter(OffsetDateTime.now().minusSeconds(60)))
+                        .collect(Collectors.toList());
+
+    }
+
+    private EstatisticaResponse criarEstatisticaResponse(final List<TransacaoRequest> lista) {
+
+        val Estatisticas = lista.stream().collect(Collectors.summarizingDouble(TransacaoRequest::getValor));
+
+        EstatisticaResponse EstatisticasTratadas = new EstatisticaResponse();
+
+        BeanUtils.copyProperties(Estatisticas, EstatisticasTratadas);
+
+        return EstatisticasTratadas;
     }
 }
 
