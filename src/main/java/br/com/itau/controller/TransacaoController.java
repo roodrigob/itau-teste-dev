@@ -35,8 +35,8 @@ public class TransacaoController {
     }
 
     @GetMapping("/estatistica")
-    public ResponseEntity<EstatisticaResponse> consultarEstatisticas() {
-        return ResponseEntity.ok(service.consultarEstatisticas());
+    public ResponseEntity<EstatisticaResponse> consultarEstatisticas(@RequestParam("periodo") final Long periodo) {
+        return ResponseEntity.ok(service.consultarEstatisticas(periodo));
     }
 
 

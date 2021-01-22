@@ -14,9 +14,7 @@ import java.time.OffsetDateTime;
 @Builder
 public class TransacaoRequest {
 
-    @NotNull
     private Double valor;
 
-    @NotNull
     private OffsetDateTime dataHora;
 }

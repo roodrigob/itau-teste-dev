@@ -3,23 +3,16 @@ package br.com.itau.service;
 import br.com.itau.request.TransacaoRequest;
 import br.com.itau.response.EstatisticaResponse;
 import br.com.itau.service.exeption.RegraDeNegocioExeption;
-import br.com.itau.utils.BusinessError;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
-import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -32,8 +25,10 @@ public class TransacaoService {
 
     public void salvarTransacoes(final TransacaoRequest request) {
 
+        log.info("Salvando Transações");
         validarTransacao(request);
 
+        log.info("Transação salva");
         listaTransacoes.add(request);
 
     }
@@ -41,32 +36,48 @@ public class TransacaoService {
     private void validarTransacao(final TransacaoRequest request) {
 
         Optional.ofNullable(request.getValor())
-                .orElseThrow(() -> new RegraDeNegocioExeption(BusinessError.VALOR_NAO_ENCONTRADO));
+                .orElseThrow(() -> {
+                    log.info("Valor não pode ser nulo");
+                    return new RegraDeNegocioExeption();
+                });
 
         Optional.ofNullable(request.getValor())
                 .filter(valorTransacao -> valorTransacao >= VALOR_MINIMO_TRANSACAO)
-                .orElseThrow(() -> new RegraDeNegocioExeption(BusinessError.VALOR_ABAIXO_DO_MINIMO));
+                .orElseThrow(() -> {
+                    log.info("Valor menor que 0 não é permitido");
+                    return new RegraDeNegocioExeption();
+                });
 
         Optional.ofNullable(request.getDataHora())
-                .orElseThrow(() -> new RegraDeNegocioExeption(BusinessError.DATA_HORA_NAO_ENCONTRADA));
+                .orElseThrow(() -> {
+                    log.info("Data não pode ser nula");
+                    return new RegraDeNegocioExeption();
+                });
 
         Optional.ofNullable(request.getDataHora())
                 .filter(transacaoData -> transacaoData.isBefore(OffsetDateTime.now()))
-                .orElseThrow(() -> new RegraDeNegocioExeption(BusinessError.DATA_HORA_INCORRETA));
+                .orElseThrow(() -> {
+                    log.info("Datas futuras não são permitidas");
+                    return new RegraDeNegocioExeption();
+                });
 
     }
 
 
     public void deletarTransacoes() {
 
+        log.info("Excluindo transações");
         listaTransacoes.removeAll(listaTransacoes);
+        log.info("Transações excluídas com Sucesso");
     }
 
-    public EstatisticaResponse consultarEstatisticas() {
+    public EstatisticaResponse consultarEstatisticas(final Long periodo) {
 
-        val listaFiltrada = filtrarListaComTrasacoesAteUmMinuto();
+        val listaFiltrada = filtrarListaComTrasacoesPorPeriodo(periodo);
+        log.info("Sucesso ao Filtrar transações");
 
         if (listaFiltrada.isEmpty()) {
+            log.info("Lista sem transações. retornando 0 para todas estatísticas");
             return EstatisticaResponse.builder().build();
         }
 
@@ -74,19 +85,22 @@ public class TransacaoService {
 
     }
 
-    private List<TransacaoRequest> filtrarListaComTrasacoesAteUmMinuto() {
+    private List<TransacaoRequest> filtrarListaComTrasacoesPorPeriodo(final Long periodo) {
+        log.info("Filtrando transações por período");
         return listaTransacoes.stream()
-                .filter(data -> data.getDataHora().isAfter(OffsetDateTime.now().minusSeconds(60)))
-                        .collect(Collectors.toList());
+                .filter(data -> data.getDataHora().isAfter(OffsetDateTime.now().minusSeconds(periodo)))
+                .collect(Collectors.toList());
 
     }
 
     private EstatisticaResponse criarEstatisticaResponse(final List<TransacaoRequest> lista) {
 
+        log.info("Criando estatísticas");
         val Estatisticas = lista.stream().collect(Collectors.summarizingDouble(TransacaoRequest::getValor));
 
         EstatisticaResponse EstatisticasTratadas = new EstatisticaResponse();
 
+        log.info("Copiando a classe de estatísticas para objeto de response");
         BeanUtils.copyProperties(Estatisticas, EstatisticasTratadas);
 
         return EstatisticasTratadas;
